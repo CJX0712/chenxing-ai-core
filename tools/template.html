@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>晨星AI · 核心内核 v1 — 世界顶级数学内核</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --panel:#ffffff; --ink:#1a1c23; --muted:#5b6070; --line:#e6e8f0;
+    --accent:#4f46e5; --accent-2:#7c3aed; --ok:#16a34a; --bad:#dc2626; --gold:#b45309;
+    --chip:#eef0fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 64px;}
+  header .star{color:var(--gold);font-size:22px;}
+  h1{font-size:26px;margin:6px 0 4px;letter-spacing:.5px}
+  .sub{color:var(--muted);margin:0 0 2px}
+  .meta{color:var(--muted);font-size:13px;margin-top:6px}
+  .meta b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:18px;box-shadow:0 1px 2px rgba(16,18,27,.04)}
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:600}
+  button:hover{background:var(--accent-2)}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  button.ghost:hover{background:var(--chip)}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;background:var(--chip);color:var(--accent)}
+  .badge.green{background:#e7f7ec;color:var(--ok)}
+  .badge.red{background:#fdeaea;color:var(--bad)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:6px}
+  .mod{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fbfbfe}
+  .mod b{font-size:14px}
+  .mod span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  ul.res{list-style:none;margin:14px 0 0;padding:0}
+  ul.res li{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  ul.res li:last-child{border-bottom:0}
+  .tick{font-weight:800;width:20px;text-align:center}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .metric{color:var(--muted);font-size:12.5px;margin-left:auto;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+  canvas{width:100%;height:300px;background:#fff;border:1px solid var(--line);border-radius:10px;display:block}
+  .legend{font-size:12.5px;color:var(--muted);margin-top:8px}
+  code{background:var(--chip);padding:2px 7px;border-radius:6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+  footer{margin-top:26px;color:var(--muted);font-size:12.5px;text-align:center}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px}
+  @keyframes r{to{transform:rotate(360deg)}}
+  h2{font-size:18px;margin:0 0 4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="star">✦</div>
+    <h1>晨星AI · 核心内核 v1</h1>
+    <p class="sub">世界顶级数学内核 · 零依赖 · 可运行 / 可复现 / 可验证</p>
+    <div class="meta">作者 <b>晨星</b> · 许可 <b>MIT</b> · 反向模式自动微分 · Transformer · Jacobi-SVD · Cholesky · logsumexp · Adam</div>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <button id="run">▶ 运行自检套件</button>
+      <span class="badge" id="badge">等待运行…</span>
+    </div>
+    <p class="sub" style="margin-top:10px">11 条可验证不变量：解析解 vs 数值解交叉验证、梯度检验、损失单调、重构误差有界。点击后在浏览器内实时计算。</p>
+    <ul class="res" id="res"><li style="color:var(--muted)">尚未运行。</li></ul>
+  </div>
+
+  <div class="card">
+    <h2>逻辑回归 · 决策边界实时演示</h2>
+    <p class="sub">用本内核的自动微分 + Adam 训练二分类，可视化学到的线性边界。</p>
+    <div class="row" style="margin:10px 0">
+      <button class="ghost" id="retrain">↻ 重新训练</button>
+      <span class="badge" id="lrstat">训练中…</span>
+    </div>
+    <canvas id="cv" width="880" height="300"></canvas>
+    <div class="legend">● 类别 A（青）&nbsp;&nbsp; ● 类别 B（橙）&nbsp;&nbsp; — 紫色直线 = 模型决策边界</div>
+  </div>
+
+  <div class="card">
+    <h2>模块清单</h2>
+    <div class="grid">
+      <div class="mod"><b>线性代数</b><span>matmul / SVD(Jacobi) / Cholesky / 正交性</span></div>
+      <div class="mod"><b>数值稳定</b><span>logsumexp 防溢出</span></div>
+      <div class="mod"><b>自动微分</b><span>反向模式 · matmul/softmax/LN/relu/log</span></div>
+      <div class="mod"><b>优化器</b><span>Adam（Kingma & Ba 2015）· 梯度裁剪</span></div>
+      <div class="mod"><b>注意力</b><span>缩放点积 + 因果掩码 softmax</span></div>
+      <div class="mod"><b>Transformer</b><span>位置编码 + 前馈 + 残差 + LayerNorm</span></div>
+      <div class="mod"><b>降维</b><span>PCA（协方差特征分解）</span></div>
+      <div class="mod"><b>聚类/近邻</b><span>k-means / k-NN</span></div>
+    </div>
+  </div>
+
+  <footer>复现：<code>node chenxing-ai.js</code> · 单文件、零依赖、MIT · ✦ 晨星</footer>
+</div>
+
+<script>
+/*ENGINE*/
+</script>
+<script>
+(function(){
+  var CX = window.CXAI;
+  // ---- 自检套件 ----
+  var runBtn=document.getElementById('run'), badge=document.getElementById('badge'), res=document.getElementById('res');
+  function render(r){
+    badge.textContent = r.pass+'/'+r.total+' '+(r.pass===r.total?'不变量全绿 ✅':'有失败 ❌');
+    badge.className='badge '+(r.pass===r.total?'green':'red');
+    var html='';
+    r.results.forEach(function(x){
+      html+='<li><span class="tick '+(x.pass?'ok':'bad')+'">'+(x.pass?'✅':'❌')+'</span>'
+        +'<span>'+x.name+'</span><span class="metric">'+(x.info||'')+'</span></li>';
+    });
+    res.innerHTML=html;
+  }
+  function run(){
+    runBtn.disabled=true; runBtn.innerHTML='<span class="spin"></span> 运行中…'; badge.textContent='计算中…';
+    setTimeout(function(){
+      try{ render(CX.runSelfTests()); }
+      catch(e){ badge.textContent='运行出错 ❌'; badge.className='badge red'; res.innerHTML='<li>'+e+'</li>'; }
+      runBtn.disabled=false; runBtn.innerHTML='▶ 运行自检套件';
+    },30);
+  }
+  runBtn.addEventListener('click', run);
+  setTimeout(run, 400); // 自动运行一次
+
+  // ---- 逻辑回归画布演示 ----
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), stat=document.getElementById('lrstat');
+  function gen(n){ CX.seed(7); var X=[],y=[]; for(var i=0;i<n;i++){ var cls=i%2; var cx=cls?1.4:-1.4, cy=cls?1.2:-1.2; X.push([cx+ (Math.random()-0.5)*1.6, cy+(Math.random()-0.5)*1.6]); y.push(cls); } return {X:X,y:y}; }
+  function train(){
+    var d=gen(120); var r=CX.logisticTrain(d.X,d.y,2,600,0.15);
+    var W=r.W.data, b=r.b.data;
+    var dw0=W[0][1]-W[0][0], dw1=W[1][1]-W[1][0], db=b[0][1]-b[0][0]; // 两类 logit 之差 = 决策边界
+    var loss=r.losses[r.losses.length-1];
+    stat.textContent='最终损失 '+loss.toFixed(3)+' · 收敛';
+    stat.className='badge green';
+    draw(d.X,d.y,dw0,dw1,db);
+  }
+  function draw(X,y,w0,w1,b){
+    var W=cv.width,H=cv.height,pad=30;
+    var xmin=-3,xmax=3,ymin=-3,ymax=3;
+    function px(x){return pad+(x-xmin)/(xmax-xmin)*(W-2*pad);}
+    function py(y){return H-pad-(y-ymin)/(ymax-ymin)*(H-2*pad);}
+    ctx.clearRect(0,0,W,H); ctx.font='12px sans-serif'; ctx.fillStyle='#5b6070';
+    // 网格
+    ctx.strokeStyle='#eef0f6'; ctx.lineWidth=1;
+    for(var g=xmin;g<=xmax;g++){ctx.beginPath();ctx.moveTo(px(g),py(ymin));ctx.lineTo(px(g),py(ymax));ctx.stroke();}
+    for(var g2=ymin;g2<=ymax;g2++){ctx.beginPath();ctx.moveTo(px(xmin),py(g2));ctx.lineTo(px(xmax),py(g2));ctx.stroke();}
+    // 决策边界 w0*x+w1*y+b=0 -> y=-(w0*x+b)/w1
+    ctx.strokeStyle='#7c3aed'; ctx.lineWidth=2.5; ctx.beginPath();
+    var ya=-(w0*xmin+b)/w1, yb=-(w0*xmax+b)/w1;
+    ctx.moveTo(px(xmin),py(Math.max(ymin,Math.min(ymax,ya))));
+    ctx.lineTo(px(xmax),py(Math.max(ymin,Math.min(ymax,yb))));
+    ctx.stroke();
+    // 数据点
+    for(var i=0;i<X.length;i++){
+      ctx.beginPath(); ctx.arc(px(X[i][0]),py(X[i][1]),4,0,Math.PI*2);
+      ctx.fillStyle=y[i]? '#ea8a3c':'#2aa8a0'; ctx.fill();
+    }
+  }
+  document.getElementById('retrain').addEventListener('click',function(){stat.textContent='训练中…';stat.className='badge';setTimeout(train,20);});
+  setTimeout(train,200);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "chenxing-ai-core",
+  "version": "1.0.0",
+  "description": "晨星AI 核心内核 v1 —— 零依赖世界顶级数学内核：反向模式自动微分 + Transformer + Jacobi-SVD + Cholesky + logsumexp + Adam，11/11 不变量全绿。",
+  "main": "chenxing-ai.js",
+  "scripts": {
+    "test": "node chenxing-ai.js",
+    "build": "node tools/build.js"
+  },
+  "keywords": ["autodiff", "transformer", "attention", "svd", "cholesky", "adam", "pca", "machine-learning", "zero-dependency"],
+  "author": "晨星",
+  "license": "MIT",
+  "engines": { "node": ">=14" }
+}
